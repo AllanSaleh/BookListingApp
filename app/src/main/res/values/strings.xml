@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Book Listing App</string>
+    <string name="search_hint">Search</string>
+    <string name="no_results">No Results Were Found. Please enter the correct name of the book in the search bar.</string>
+    <string name="results_number">results</string>
+</resources>
