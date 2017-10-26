@@ -3,10 +3,9 @@ package com.example.allan.booklistingapp;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -19,16 +18,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements android.support.v4.app.LoaderManager.LoaderCallbacks<String>{
     EditText searchQuery;
     ImageButton searchButton;
     TextView resultsNumber;
@@ -57,62 +49,21 @@ public class MainActivity extends AppCompatActivity {
                 if (info == null || !info.isConnected()) {
                     Toast.makeText(MainActivity.this, "No Internet Connection.", Toast.LENGTH_SHORT).show();
                 } else {
-                    BookAsyncTask bookAsyncTask = new BookAsyncTask();
-                    bookAsyncTask.execute(searchQuery.getText().toString());
+                    if (getSupportLoaderManager().getLoader(0) == null)
+                        getSupportLoaderManager().initLoader(0, null, MainActivity.this).forceLoad();
+                    else
+                        getSupportLoaderManager().restartLoader(0, null, MainActivity.this).forceLoad();
+
                 }
             }
         });
     }
 
-    private class BookAsyncTask extends AsyncTask<String, Void, String> {
 
-        @Override
-        protected String doInBackground(String... strings) {
-            StringBuilder JsonData = new StringBuilder();
-            HttpURLConnection httpURLConnection = null;
-            InputStream inputStream = null;
-            try {
-                String query = URLEncoder.encode(strings[0], "UTF-8");
-                String urlString = "https://www.googleapis.com/books/v1/volumes?q=" + query;
-                Log.v("NETWORK_URL", urlString);
-                URL url = new URL(urlString);
-                httpURLConnection = (HttpURLConnection) url.openConnection();
-                httpURLConnection.setRequestMethod("GET");
-                httpURLConnection.setConnectTimeout(10000);
-                httpURLConnection.setReadTimeout(15000);
-                httpURLConnection.connect();
-                inputStream = httpURLConnection.getInputStream();
-                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-                BufferedReader reader = new BufferedReader(inputStreamReader);
-                String line = reader.readLine();
-                while (line != null) {
-                    JsonData.append(line);
-                    line = reader.readLine();
-                }
-                Log.v("AsyncTask", "Connected" + httpURLConnection.getResponseCode());
-            } catch (Exception e) {
-                e.printStackTrace();
-                Log.v("AsyncTask", e.getMessage());
-            } finally {
-                if (httpURLConnection != null)
-                    httpURLConnection.disconnect();
-                if (inputStream != null)
-                    try {
-                        inputStream.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-            }
-            return JsonData.toString();
-        }
 
-        @Override
-        protected void onPostExecute(String s) {
-            if (!s.isEmpty())
-                updateUI(s);
-            else Toast.makeText(MainActivity.this, "Enter a book.", Toast.LENGTH_SHORT).show();
-        }
-    }
+
+
+
 
     private void updateUI(String s) {
         try {
@@ -161,5 +112,24 @@ public class MainActivity extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public Loader<String> onCreateLoader(int id, Bundle args) {
+        return new BookAsyncTask(this, searchQuery.getText().toString());
+    }
+
+    @Override
+    public void onLoadFinished(Loader<String> loader, String data) {
+        // call the updateUI() method and pass the json string to it (s)
+        if (data != null && !data.isEmpty())
+            updateUI(data);
+        else
+            Toast.makeText(MainActivity.this, "No Internet!!!", Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onLoaderReset(Loader<String> loader) {
+
     }
 }
