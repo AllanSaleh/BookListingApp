@@ -6,8 +6,9 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
@@ -39,31 +40,33 @@ public class MainActivity extends AppCompatActivity implements android.support.v
         noResultView.setVisibility(View.INVISIBLE);
         resultsNumber.setVisibility(View.VISIBLE);
         list.setVisibility(View.VISIBLE);
-        searchButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                InputMethodManager inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                inputManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
-                ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-                final NetworkInfo info = connectivityManager.getActiveNetworkInfo();
-                if (info == null || !info.isConnected()) {
-                    Toast.makeText(MainActivity.this, "No Internet Connection.", Toast.LENGTH_SHORT).show();
-                } else {
-                    if (getSupportLoaderManager().getLoader(0) == null)
-                        getSupportLoaderManager().initLoader(0, null, MainActivity.this).forceLoad();
-                    else
-                        getSupportLoaderManager().restartLoader(0, null, MainActivity.this).forceLoad();
+        //searchButton.setOnClickListener(new View.OnClickListener() {
+           searchQuery.addTextChangedListener(new TextWatcher() {
+               @Override
+               public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
-                }
-            }
-        });
+               }
+
+               @Override
+               public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                   ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                   final NetworkInfo info = connectivityManager.getActiveNetworkInfo();
+                   if (info == null || !info.isConnected()) {
+                       Toast.makeText(MainActivity.this, "No Internet Connection.", Toast.LENGTH_SHORT).show();
+                   } else {
+                       if (getSupportLoaderManager().getLoader(0) == null)
+                           getSupportLoaderManager().initLoader(0, null, MainActivity.this).forceLoad();
+                       else
+                           getSupportLoaderManager().restartLoader(0, null, MainActivity.this).forceLoad();
+                   }
+               }
+
+               @Override
+               public void afterTextChanged(Editable editable) {
+
+               }
+           });
     }
-
-
-
-
-
-
 
     private void updateUI(String s) {
         try {
